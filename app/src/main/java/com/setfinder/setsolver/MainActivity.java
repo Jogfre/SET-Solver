@@ -109,9 +109,6 @@ public class MainActivity extends CameraActivity {
     private void mainButton() {
         if (cameraState) {
             turnOffCamera();
-            drawFrames();
-            matToImage(frames.get(0), staticCameraView);
-            showCards();
         } else {
             turnOnCamera();
         }
@@ -128,6 +125,16 @@ public class MainActivity extends CameraActivity {
             matToImage(frames.get(frameIdx), staticCameraView);
         }
     }
+    private void getCardValues() {
+        // TODO: Get isolated cards for each contour, then put that in a <Card class> and store all cards in a List/Map
+
+        // TODO: Send all cards to classifier model
+
+        // TODO: Calculate SETs from all the classified cards and store any SETs
+
+        // TODO: Render frames on the screen with 3 cards making up a SET highlighted.
+    }
+
     private void showCards() {
         if (contourClone == null || contourClone.size() < 1) {
             return;
@@ -154,22 +161,8 @@ public class MainActivity extends CameraActivity {
         Core.flip(mat.t(), mat, 1); // this will rotate the image 90° clockwise
     }
     private void drawFrames() {
-        frames.clear();
-        rotateFrame(lastFrame);
-        frames.add(lastFrame);
-        if (contourClone == null) {
-            return;
-        }
-        Mat tmp = frameClone.clone();
-        rotateFrame(tmp);
-        frames.add(tmp);
-        for (int i = 0; i < contourClone.size(); i++) {
-            tmp = frameClone.clone();
-            Imgproc.drawContours(tmp, contourClone, i, new Scalar(0, 255, 0), 6);
-            Imgproc.drawContours(tmp, contourClone, i, new Scalar(0, 0, 0), 2);
-            rotateFrame(tmp);
-            frames.add(tmp);
-        }
+        // TODO: Draw all frames with the three cards that make a SET
+        // Remember to rotate frames because Android draws frames -90 degrees clockwise.
     }
     private void matToImage(Mat mat, ImageView iv) {
         if (mat.empty()) {

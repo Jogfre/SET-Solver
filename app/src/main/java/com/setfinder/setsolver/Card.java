@@ -23,6 +23,11 @@ public class Card {
         this.isolatedCard = isolatedCard;
         this.contour = contour;
     }
+
+    public void generateStrings() {
+        // TODO: generate the color, shape, amount and filling from the code. Format is <amount, color, filling, shape>
+    }
+
     /*
     -------- Setters --------
      */
