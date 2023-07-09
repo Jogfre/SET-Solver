@@ -31,7 +31,6 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="420dp"
-            android:layout_margin="4dp"
             app:strokeWidth="4dp"
             app:strokeColor="@color/bkg_outline"
             app:cardCornerRadius="15dp"
@@ -42,7 +41,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:visibility="visible"
                 app:camera_id="back" />
+
+            <ImageView
+                android:id="@+id/staticCameraView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:visibility="invisible"
+                tools:src="@tools:sample/avatars" />
+
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -63,31 +72,28 @@
                 android:gravity="center"
                 android:orientation="horizontal">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/backButton"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
+                    android:background="@null"
                     android:gravity="center"
                     android:rotation="180"
                     android:src="@android:drawable/ic_media_play" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/centerButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
+                    android:background="@null"
                     android:gravity="center"
                     android:src="@mipmap/set_icon_round" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/forwardButton"
                     android:layout_width="70dp"
                     android:layout_height="70dp"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
+                    android:background="@null"
                     android:gravity="center"
                     android:src="@android:drawable/ic_media_play" />
             </LinearLayout>

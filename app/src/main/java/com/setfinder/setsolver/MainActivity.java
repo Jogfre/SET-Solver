@@ -9,14 +9,18 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.Manifest;
+import android.view.View;
 import android.widget.ImageView;
 
 import org.opencv.android.CameraActivity;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,10 +29,15 @@ import java.util.List;
 public class MainActivity extends CameraActivity {
     // Variable declarations
     private CameraBridgeViewBase mOpenCvCameraView;
+    private ImageView staticCameraView;
     private boolean cameraState = true;
+    private int frameIdx = 0;
 
+    Mat lastFrame;
     Mat frameClone;
+    ArrayList<Mat> frames;
     List<MatOfPoint> contourClone;
+    ImageView iconButton;
     ImageView forwardButton;
     ImageView backButton;
 
@@ -43,15 +52,20 @@ public class MainActivity extends CameraActivity {
         getPermission();
 
 
-        ImageView iconImage = findViewById(R.id.centerButton);
-        iconImage.setOnClickListener(v -> mainButton());
+        iconButton = findViewById(R.id.centerButton);
+        iconButton.setOnClickListener(v -> mainButton());
+
         forwardButton = findViewById(R.id.forwardButton);
+        forwardButton.setOnClickListener(v -> cycleForward());
+
         backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> cycleBack());
 
 
         // Attach the cameraView to the corresponding JavaCameraView
+        staticCameraView = findViewById(R.id.staticCameraView);
+        frames = new ArrayList<>();
         mOpenCvCameraView = findViewById(R.id.cameraView);
-        mOpenCvCameraView.enableFpsMeter();
 
         // Create the CameraView Listener that will activate the camera and capture frames to be used
         mOpenCvCameraView.setCvCameraViewListener(new CameraBridgeViewBase.CvCameraViewListener2() {
@@ -80,7 +94,7 @@ public class MainActivity extends CameraActivity {
                     frameClone = null;
                     contourClone = null;
                 }
-
+                lastFrame = frame.clone();
                 return frame;
             }
         });
@@ -95,9 +109,23 @@ public class MainActivity extends CameraActivity {
     private void mainButton() {
         if (cameraState) {
             turnOffCamera();
+            drawFrames();
+            matToImage(frames.get(0), staticCameraView);
             showCards();
         } else {
             turnOnCamera();
+        }
+    }
+    private void cycleForward() {
+        if (frameIdx + 1 < frames.size()) {
+            frameIdx++;
+            matToImage(frames.get(frameIdx), staticCameraView);
+        }
+    }
+    private void cycleBack() {
+        if (frameIdx - 1 >= 0) {
+            frameIdx--;
+            matToImage(frames.get(frameIdx), staticCameraView);
         }
     }
     private void showCards() {
@@ -122,6 +150,27 @@ public class MainActivity extends CameraActivity {
 
         return isolatedCards;
     }
+    private void rotateFrame(Mat mat) {
+        Core.flip(mat.t(), mat, 1); // this will rotate the image 90° clockwise
+    }
+    private void drawFrames() {
+        frames.clear();
+        rotateFrame(lastFrame);
+        frames.add(lastFrame);
+        if (contourClone == null) {
+            return;
+        }
+        Mat tmp = frameClone.clone();
+        rotateFrame(tmp);
+        frames.add(tmp);
+        for (int i = 0; i < contourClone.size(); i++) {
+            tmp = frameClone.clone();
+            Imgproc.drawContours(tmp, contourClone, i, new Scalar(0, 255, 0), 6);
+            Imgproc.drawContours(tmp, contourClone, i, new Scalar(0, 0, 0), 2);
+            rotateFrame(tmp);
+            frames.add(tmp);
+        }
+    }
     private void matToImage(Mat mat, ImageView iv) {
         if (mat.empty()) {
             return;
@@ -133,14 +182,25 @@ public class MainActivity extends CameraActivity {
     }
     private void turnOffCamera() {
         mOpenCvCameraView.disableView();
+
+        mOpenCvCameraView.setVisibility(View.GONE);
+        staticCameraView.setVisibility(View.VISIBLE);
+
+        frameIdx = 0;
         forwardButton.setEnabled(true);
         backButton.setEnabled(true);
+
         cameraState = false;
     }
     private void turnOnCamera() {
+        mOpenCvCameraView.setVisibility(View.VISIBLE);
+        staticCameraView.setVisibility(View.GONE);
+
         mOpenCvCameraView.enableView();
+
         forwardButton.setEnabled(false);
         backButton.setEnabled(false);
+
         cameraState = true;
     }
 
