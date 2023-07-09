@@ -1,24 +1,36 @@
 package com.setfinder.setsolver;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.Manifest;
+import android.widget.ImageView;
 
 import org.opencv.android.CameraActivity;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends CameraActivity {
     // Variable declarations
     private CameraBridgeViewBase mOpenCvCameraView;
+    private boolean cameraState = true;
+
+    Mat frameClone;
+    List<MatOfPoint> contourClone;
+    ImageView forwardButton;
+    ImageView backButton;
 
 
     // Main function for the Activity
@@ -29,6 +41,13 @@ public class MainActivity extends CameraActivity {
 
         // Get the required permissions
         getPermission();
+
+
+        ImageView iconImage = findViewById(R.id.centerButton);
+        iconImage.setOnClickListener(v -> mainButton());
+        forwardButton = findViewById(R.id.forwardButton);
+        backButton = findViewById(R.id.backButton);
+
 
         // Attach the cameraView to the corresponding JavaCameraView
         mOpenCvCameraView = findViewById(R.id.cameraView);
@@ -52,13 +71,14 @@ public class MainActivity extends CameraActivity {
                 List<MatOfPoint> contours = CardFinder.findAllContours(frame);
                 //TODO: Implement Isolated Card detection
 
-                // Mat isolatedCard = CardFinder.isolateCard(contours.get(0), frame, 100, 150);
-
-
-
 
                 if (contours.size() > 0) {
+                    frameClone = frame.clone();
+                    contourClone = contours;
                     CardFinder.drawContours(frame, contours);
+                } else {
+                    frameClone = null;
+                    contourClone = null;
                 }
 
                 return frame;
@@ -67,10 +87,61 @@ public class MainActivity extends CameraActivity {
 
         // Check that OpenCV has loaded
         if (OpenCVLoader.initDebug()) {
-            mOpenCvCameraView.enableView();
+            turnOnCamera();
         } else {
             Log.e("openCV", "Failed to load openCV library");
         }
+    }
+    private void mainButton() {
+        if (cameraState) {
+            turnOffCamera();
+            showCards();
+        } else {
+            turnOnCamera();
+        }
+    }
+    private void showCards() {
+        if (contourClone == null || contourClone.size() < 1) {
+            return;
+        }
+        // Isolate the cards from the image by using the contours.
+        ArrayList<Mat> isolatedCards = isolateCards(200, 300);
+
+        // Add the RecyclerView and put all isolated cards into it.
+        RecyclerView recyclerView = findViewById(R.id.mRecyclerView);
+        Card_RecyclerViewAdapter adapter = new Card_RecyclerViewAdapter(this, isolatedCards);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+    private ArrayList<Mat> isolateCards(int width, int height) {
+        ArrayList<Mat> isolatedCards = new ArrayList<>();
+        for (MatOfPoint contour : contourClone) {
+            Mat card = CardFinder.isolateCard(contour, frameClone, width, height);
+            isolatedCards.add(card);
+        }
+
+        return isolatedCards;
+    }
+    private void matToImage(Mat mat, ImageView iv) {
+        if (mat.empty()) {
+            return;
+        }
+        Bitmap bm = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, bm);
+
+        iv.setImageBitmap(bm);
+    }
+    private void turnOffCamera() {
+        mOpenCvCameraView.disableView();
+        forwardButton.setEnabled(true);
+        backButton.setEnabled(true);
+        cameraState = false;
+    }
+    private void turnOnCamera() {
+        mOpenCvCameraView.enableView();
+        forwardButton.setEnabled(false);
+        backButton.setEnabled(false);
+        cameraState = true;
     }
 
     @Override

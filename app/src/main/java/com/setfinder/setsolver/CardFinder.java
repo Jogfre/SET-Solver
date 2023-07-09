@@ -48,7 +48,7 @@ public class CardFinder {
         Point[] sortedPoints = new Point[4];
         List<Point> corners = UtilClass.getCornersFromPoints(contour.toList());
 
-        // Black magic shit to get the 4 corners from the contours
+        // Black magic to get the 4 corners of the card from the contours
         // Source: https://stackoverflow.com/questions/44156405/opencv-java-card-extraction-from-image
         MatOfPoint2f quadrilateral = new MatOfPoint2f();
         MatOfPoint2f convexShape = new MatOfPoint2f(contour.toArray());
@@ -121,7 +121,6 @@ public class CardFinder {
         Imgproc.warpPerspective(inputFrame, destImage, warpMat, inputFrame.size());
         Rect rect = Imgproc.boundingRect(dst);
 
-        //HighGui.imshow("Isolated Card", destImage.submat(rect));
 
         return destImage.submat(rect);
     }
