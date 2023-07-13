@@ -1,6 +1,14 @@
 package com.setfinder.setsolver;
 
+import android.graphics.Bitmap;
+import android.widget.ImageView;
+
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,5 +74,45 @@ public class UtilClass {
         corners.add(new Point(maxX, minY));
         corners.add(new Point(maxX, maxY));
         return corners;
+    }
+
+    public static void rotateFrame(Mat mat) {
+        Core.flip(mat.t(), mat, 1); // this will rotate the image 90° clockwise
+    }
+
+    public static void putText(String text, Mat frame, Point location) {
+        Imgproc.putText(
+                frame,
+                text,
+                location,
+                2,
+                0.5,
+                new Scalar(0, 0, 0),
+                5
+        );
+        Imgproc.putText(
+                frame,
+                text,
+                location,
+                2,
+                0.5,
+                new Scalar(255, 255, 255),
+                1
+        );
+    }
+
+    /**
+     * Converts the given Mat to a bitmap and applies it to an ImageView
+     * @param mat the input Mat that shall be converted and put into the ImageView
+     * @param iv the ImageView that the Mat will be put into.
+     */
+    public static void matToImage(Mat mat, ImageView iv) {
+        if (mat.empty()) {
+            return;
+        }
+        Bitmap bm = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, bm);
+
+        iv.setImageBitmap(bm);
     }
 }
