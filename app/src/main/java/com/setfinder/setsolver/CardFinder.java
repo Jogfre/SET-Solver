@@ -18,16 +18,11 @@ import java.util.stream.Collectors;
 
 public class CardFinder {
 
-
-    public static void drawIdentifiedCards(Mat inputMat, List<MatOfPoint> contours) {
-        //TODO: Implement function that draws what card is what on screen.
-    }
-
     /**
-     * Takes an input Matrix from openCV and draws contours on any objects it finds.
-     * Makes use of the "findAllCards" and "preProcessImage" functions.
-     * @param inputMat the mat that will be drawn on.
-     * @param contours contours that will be drawn.
+     * <H3>Takes an input Matrix from openCV and draws contours on any objects it finds.
+     * Makes use of the "findAllCards" and "preProcessImage" functions.</H3>
+     * @param inputMat an openCV Mat object that will be drawn to.
+     * @param contours a List containing the MatOfPoint of all contours that will be drawn.
      */
     public static void drawContours(Mat inputMat, List<MatOfPoint> contours) {
 
@@ -44,41 +39,50 @@ public class CardFinder {
     }
 
     public static Mat isolateCard(MatOfPoint contour, Mat inputFrame, int width, int height) {
-        //Sort points relative to center of mass
-        Point[] sortedPoints = new Point[4];
-        List<Point> corners = UtilClass.getCornersFromPoints(contour.toList());
 
-        // Black magic to get the 4 corners of the card from the contours
+        // Get the 4 corners of the card from the contours
         // Source: https://stackoverflow.com/questions/44156405/opencv-java-card-extraction-from-image
         MatOfPoint2f quadrilateral = new MatOfPoint2f();
         MatOfPoint2f convexShape = new MatOfPoint2f(contour.toArray());
         Imgproc.approxPolyDP(convexShape,quadrilateral,20, true);
 
         //Sort the points so the topLeft is always in the correct spot.
-        List<Point> points = quadrilateral.toList();
-        if (points.size() == 4) {
-            sortedPoints[0] = points.get(1); // Top left
-            sortedPoints[1] = points.get(0); // Top Right
-            sortedPoints[2] = points.get(2); // Bottom Right
-            sortedPoints[3] = points.get(3); // Bottom Left
+        Point[] sortedPoints = sortPoints(quadrilateral.toList(), contour);
 
-            double distanceShort = UtilClass.eucilidean_fast(sortedPoints[0],sortedPoints[1]) * 1.1;
-            double distanceLong = UtilClass.eucilidean_fast(sortedPoints[0], sortedPoints[2]);
+        // Corner points of the card that should be transformed
+        MatOfPoint2f src = new MatOfPoint2f(
+                sortedPoints[0],
+                sortedPoints[1],
+                sortedPoints[2],
+                sortedPoints[3]
+        );
 
-            // If the card is closer to the horizontal axis
-            if (distanceShort > distanceLong) {
-                Point p0 = sortedPoints[0];
-                Point p1 = sortedPoints[1];
-                Point p2 = sortedPoints[2];
-                Point p3 = sortedPoints[3];
+        // Corner points of the target destination that the card should be transformed into
+        MatOfPoint2f dst = new MatOfPoint2f(
+                // Points in order of: Top-left, Top-Right, Bottom-Left, Bottom-Right
+                // The -1 is there because the pixels are 0-indexed and the width/height are indexed from 1.
+                new Point(0, 0),
+                new Point(width - 1, 0),
+                new Point(0, height - 1),
+                new Point(width- 1,  height - 1)
+        );
 
-                sortedPoints[0] = p1;
-                sortedPoints[1] = p3;
-                sortedPoints[2] = p0;
-                sortedPoints[3] = p2;
-            }
+        // Calculate the warpMat (matrix transformation)
+        Mat warpMat = Imgproc.getPerspectiveTransform(src, dst);
 
-        } else {
+        // Apply the transformation to a new destination Mat
+        Mat destImage = new Mat();
+        Imgproc.warpPerspective(inputFrame, destImage, warpMat, inputFrame.size());
+        Rect rect = Imgproc.boundingRect(dst);
+
+        return destImage.submat(rect);
+    }
+
+    public static Point[] sortPoints(List<Point> points, MatOfPoint contour) {
+        Point[] sortedPoints = new Point[4];
+
+        if (points.size() != 4) {
+            List<Point> corners = UtilClass.getCornersFromPoints(contour.toList());
             //Calculate the center of mass of contour using moments
             Moments moment = Imgproc.moments(contour);
             int x = (int) (moment.get_m10() / moment.get_m00());
@@ -99,30 +103,30 @@ public class CardFinder {
                     sortedPoints[3] = new Point(dataX, dataY);
                 }
             }
+            return sortedPoints;
         }
 
-        //Prepare Mat src and dst
-        MatOfPoint2f src = new MatOfPoint2f(
-                sortedPoints[0],
-                sortedPoints[1],
-                sortedPoints[2],
-                sortedPoints[3]
-        );
-        MatOfPoint2f dst = new MatOfPoint2f(
-                // Points in order of: Top-left, Top-Right, Bottom-Left, Bottom-Right
-                new Point(0, 0),
-                new Point(width - 1, 0),
-                new Point(0, height - 1),
-                new Point(width- 1,  height - 1)
-        );
-        Mat warpMat = Imgproc.getPerspectiveTransform(src, dst);
+        sortedPoints[0] = points.get(1); // Top left
+        sortedPoints[1] = points.get(0); // Top Right
+        sortedPoints[2] = points.get(2); // Bottom Right
+        sortedPoints[3] = points.get(3); // Bottom Left
 
-        Mat destImage = new Mat();
-        Imgproc.warpPerspective(inputFrame, destImage, warpMat, inputFrame.size());
-        Rect rect = Imgproc.boundingRect(dst);
+        double distanceShort = UtilClass.eucilidean_fast(sortedPoints[0],sortedPoints[1]) * 1.1;
+        double distanceLong = UtilClass.eucilidean_fast(sortedPoints[0], sortedPoints[2]);
 
+        // If the card is closer to the horizontal axis
+        if (distanceShort > distanceLong) {
+            Point p0 = sortedPoints[0];
+            Point p1 = sortedPoints[1];
+            Point p2 = sortedPoints[2];
+            Point p3 = sortedPoints[3];
 
-        return destImage.submat(rect);
+            sortedPoints[0] = p1;
+            sortedPoints[1] = p3;
+            sortedPoints[2] = p0;
+            sortedPoints[3] = p2;
+        }
+        return sortedPoints;
     }
 
     public static List<MatOfPoint> findAllContours(final Mat inputMat) {

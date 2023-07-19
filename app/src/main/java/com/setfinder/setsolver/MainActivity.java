@@ -83,18 +83,16 @@ public class MainActivity extends CameraActivity {
             public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
                 Mat frame = inputFrame.rgba();
                 List<MatOfPoint> contours = CardFinder.findAllContours(frame);
+                frameClone = null;
+                contourClone = null;
 
                 //TODO: Implement Isolated Card detection
-
                 if (contours.size() > 0) {
                     frameClone = frame.clone();
                     UtilClass.rotateFrame(frameClone);
                     contourClone = CardFinder.findAllContours(frameClone);
                     CardFinder.drawContours(frame, contours);
 
-                } else {
-                    frameClone = null;
-                    contourClone = null;
                 }
 
                 lastFrame = frame.clone();
