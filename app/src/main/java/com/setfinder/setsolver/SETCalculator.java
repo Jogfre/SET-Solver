@@ -5,6 +5,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SETCalculator {
+    /**
+     * <h3>calculateSET()</h3>
+     * Will take an input HashMap containing the Card object, using the card properties code as a String key.<br>
+     * Will then iterate through the HashMap and compute any containing SETs.<br>
+     * @param validCards a HashMap containing the cards using their properties String as a key.
+     * @return a HashSet containing any potential SETs.
+     * @see com.setfinder.setsolver.Card
+     */
     public static Set<Card[]> calculateSET(HashMap<String, Card> validCards) {
         String[] keys = validCards.keySet().toArray(new String[0]);
         final Set<Card[]> SET = new HashSet<>();
@@ -40,11 +48,17 @@ public class SETCalculator {
         return SET;
     }
 
+    /**
+     * <h3>findComplement()</h3>
+     * This function will take two input strings of length 4 that are digits ranging from 1 to 3.<br>
+     * It will then return the complementing string that will form a SET.<br>
+     *
+     * Example: inputs 1123 and 1132, will give the result: 1111
+     * @param input1 the String containing the properties of the first card.
+     * @param input2 the String containing the properties of the second card.
+     * @return the String containing the properties of the complementary card.
+     */
     public static String findComplement(String input1, String input2) {
-        /*
-        Takes two 4-digit codes and calculates the resulting code to create a SET.
-        Example: 1123, 1132 will give the result:
-         */
         StringBuilder output = new StringBuilder();
 
         for (int i = 0; i < 4; i++) {

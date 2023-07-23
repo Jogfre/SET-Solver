@@ -2,6 +2,8 @@ package com.setfinder.setsolver;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -19,9 +21,10 @@ import java.util.stream.Collectors;
 public class CardFinder {
 
     /**
-     * <H3>Takes an input Matrix from openCV and draws contours on any objects it finds.
-     * Makes use of the "findAllCards" and "preProcessImage" functions.</H3>
-     * @param inputMat an openCV Mat object that will be drawn to.
+     * <H3>drawContours()</H3>
+     * Takes an input Matrix from openCV and draws contours on any objects it finds.
+     * Makes use of the "findAllCards" and "preProcessImage" functions.
+     * @param inputMat an openCV Mat object that will be drawn on.
      * @param contours a List containing the MatOfPoint of all contours that will be drawn.
      */
     public static void drawContours(Mat inputMat, List<MatOfPoint> contours) {
@@ -38,7 +41,20 @@ public class CardFinder {
         }
     }
 
-    public static Mat isolateCard(MatOfPoint contour, Mat inputFrame, int width, int height) {
+    /**
+     * <H3>createIsolatedCard()</H3>
+     * This function will take the contour and crop it out of the input frame and then transform the perspective to be upright and then
+     * match it to the input width and height. The function will only work properly if the given contour has 4 clearly defined corners.
+     * If more corners are present, the results will be unreliable.
+     *
+     * @param contour an openCV MatOfPoint object that will be used to define the region that will be extracted from the frame.
+     * @param inputFrame an openCV Mat object that will be the base of the extracted region.
+     * @param width an integer that defines how wide (in pixels) the output Mat will be.
+     * @param height an integer that defines how tall (in pixels) the output Mat will be.
+     * @return an openCV Mat with a transformed region that has been extracted from the input Mat.
+     * @see #sortPoints
+     */
+    public static Mat createIsolatedCard(MatOfPoint contour, Mat inputFrame, int width, int height) {
 
         // Get the 4 corners of the card from the contours
         // Source: https://stackoverflow.com/questions/44156405/opencv-java-card-extraction-from-image
@@ -78,6 +94,15 @@ public class CardFinder {
         return destImage.submat(rect);
     }
 
+    /**
+     * <H3>sortPoints()</H3>
+     * The function will take a list of points and sort them so they are in the 'correct' orientation for the isolateCards() function.
+     * The points are sorted in the order of: Top left, Top Right, Bottom right, Bottom left.
+     *
+     * @param points a List containing the points that will be sorted.
+     * @param contour the contour the points were extracted from (as a backup if the number of points exceed 4)
+     * @return An array of size 4 containing the points in the above mentioned sorted order.
+     */
     public static Point[] sortPoints(List<Point> points, MatOfPoint contour) {
         Point[] sortedPoints = new Point[4];
 
@@ -132,6 +157,7 @@ public class CardFinder {
     public static List<MatOfPoint> findAllContours(final Mat inputMat) {
         //Find the contours of an image
         final Mat processedImage = preProcessImage(inputMat);
+        final int noiseThreshold = 3000;
 
         final List<MatOfPoint> allContours = new ArrayList<>();
         Imgproc.findContours(
@@ -144,7 +170,7 @@ public class CardFinder {
 
         return allContours.stream().filter(contour -> { // Lambda function to filter out contours that are not cards.
             final double area = Imgproc.contourArea(contour);
-            final boolean isNotNoise = area > 3_000;
+            final boolean isNotNoise = area > noiseThreshold;
 
             // Approximate the corners of the given contour to check if there are only 4
             MatOfPoint2f quadrilateral = new MatOfPoint2f();
@@ -155,6 +181,7 @@ public class CardFinder {
 
         }).collect(Collectors.toList());
     }
+    @NonNull
     private static Mat preProcessImage(final Mat originalImage) {
 
         final Mat processedImage = new Mat();

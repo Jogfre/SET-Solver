@@ -64,7 +64,7 @@ public class CardClassifier {
 
             // find the index of the class with the highest confidence
             float[] confidences = outputFeature0.getFloatArray();
-            result = getClass(confidences);
+            result = getPredictedClass(confidences);
 
             // Releases model resources if no longer used.
             model.close();
@@ -75,7 +75,7 @@ public class CardClassifier {
     }
 
 
-    private static String getClass(float[] confidences) {
+    private static String getPredictedClass(float[] confidences) {
         int maxPos = 0;
         float maxConfidence = 0;
         for (int i = 0; i < confidences.length; i++) {

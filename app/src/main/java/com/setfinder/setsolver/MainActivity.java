@@ -81,18 +81,18 @@ public class MainActivity extends CameraActivity {
 
             @Override
             public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-                Mat frame = inputFrame.rgba();
-                List<MatOfPoint> contours = CardFinder.findAllContours(frame);
                 frameClone = null;
                 contourClone = null;
 
-                //TODO: Implement Isolated Card detection
+                // Get the frame from the CameraBridgeViewBase
+                Mat frame = inputFrame.rgba();
+                List<MatOfPoint> contours = CardFinder.findAllContours(frame);
+
                 if (contours.size() > 0) {
                     frameClone = frame.clone();
                     UtilClass.rotateFrame(frameClone);
-                    contourClone = CardFinder.findAllContours(frameClone);
+                    contourClone = CardFinder.findAllContours(frameClone); //TODO: This might be causing problems where cards are found on the main frame, but no on the rotated clone. Investigate further.
                     CardFinder.drawContours(frame, contours);
-
                 }
 
                 lastFrame = frame.clone();
@@ -156,7 +156,7 @@ public class MainActivity extends CameraActivity {
             return;
         }
 
-        ArrayList<Mat> isolatedCards = isolateCards(contourClone, 100, 150);
+        ArrayList<Mat> isolatedCards = isolateCards(frameClone, contourClone, 100, 150);
         cards.clear();
 
         for (int i = 0; i < isolatedCards.size(); i++) {
@@ -194,15 +194,42 @@ public class MainActivity extends CameraActivity {
         }
     }
 
-    private ArrayList<Mat> isolateCards(List<MatOfPoint> contours, int width, int height) {
+    /**
+     * <h3>isolateCards()</h3>
+     * Returns an ArrayList of Mat of all the contours that have been cropped out and transformed to a top-down perspective.
+     * @param frame the frame that the contours will be extracted from. Is of type openCV Mat.
+     * @param contours the contours that will be used to mark which region that will be extracted from the frame. Is a list of openCV MatOfPoint.
+     * @param width the width of the output mat that the extracted image will be transformed into.
+     * @param height the height of the output mat that the extracted image will be transformed into.
+     * @return an ArrayList containing all the extracted and transformed images.<br>If the frame or contours are empty, the returned ArrayList will also be empty.
+     * @see com.setfinder.setsolver.CardFinder#createIsolatedCard
+     */
+    private static ArrayList<Mat> isolateCards(Mat frame, List<MatOfPoint> contours, int width, int height) {
         ArrayList<Mat> isolatedCards = new ArrayList<>();
+
+        // Check that everything is correct before calculating
+        if (frame.empty()) {
+            return isolatedCards;
+        }
+
+        if (contours.size() < 1) {
+            return  isolatedCards;
+        }
+
+        // Loop through the contours and isolate the cards from the frame.
         for (MatOfPoint contour : contours) {
-            Mat cardMat = CardFinder.isolateCard(contour, frameClone, width, height);
+            Mat cardMat = CardFinder.createIsolatedCard(contour, frame, width, height);
             isolatedCards.add(cardMat);
         }
 
         return isolatedCards;
     }
+
+    /**
+     * <H3>drawFrames()</H3>
+     * Generates all the frames for navigation window.<br>
+     * Utilizes the class variables: <code>frames, lastFrame, frameClone, setFrames</code>
+     */
     private void drawFrames() {
         frames.clear();
         frames.add(lastFrame);
@@ -217,11 +244,14 @@ public class MainActivity extends CameraActivity {
         }
     }
 
+    /**
+     * <H3>turnOffCamera()</H3>
+     * Turn off the camera and hide its ViewField,
+     * Then enable the staticCameraView to display captured frames.<br>
+     * Also enables the navigation buttons.
+     * @see #turnOnCamera()
+     */
     private void turnOffCamera() {
-        // Turn off the camera and hide its ViewField.
-        // Then enable the staticCameraView to display captured frames.
-        // Also enables the navigation buttons.
-
         mOpenCvCameraView.disableView();
 
         mOpenCvCameraView.setVisibility(View.GONE);
@@ -233,6 +263,14 @@ public class MainActivity extends CameraActivity {
 
         cameraState = false;
     }
+
+    /**
+     * <H3>turnOnCamera()</H3>
+     * Hide the staticCameraView, show the CameraView
+     * and disable the navigation buttons.<br>
+     * After that, turn on the camera.
+     * @see #turnOffCamera()
+     */
     private void turnOnCamera() {
         // Hide the staticCameraView and show the CameraView.
         // Also disable the navigation buttons.
