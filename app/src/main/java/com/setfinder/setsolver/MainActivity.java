@@ -93,6 +93,8 @@ public class MainActivity extends CameraActivity {
                     UtilClass.rotateFrame(frameClone);
                     contourClone = CardFinder.findAllContours(frameClone); //TODO: This might be causing problems where cards are found on the main frame, but no on the rotated clone. Investigate further.
                     CardFinder.drawContours(frame, contours);
+
+
                 }
 
                 lastFrame = frame.clone();
