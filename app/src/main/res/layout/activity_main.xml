@@ -57,7 +57,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:gravity="center"
             android:background="@color/bkg_primary"
             app:cardCornerRadius="15dp"
@@ -99,12 +99,14 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/mRecyclerView"
+        <TextView
+            android:id="@+id/InfoField"
             android:layout_width="wrap_content"
-            android:layout_height="206dp"
+            android:layout_height="140dp"
+            android:layout_weight="1"
             android:gravity="center"
-            android:layout_weight="1"/>
+            android:text="@string/infoField_default"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display2" />
 
     </LinearLayout>
 

@@ -49,12 +49,12 @@ public class CardClassifier {
             // Iterate over each pixel and put them into the byteBuffer
             for (int row = 0; row < inputMat.rows(); row++) {
                 for (int col = 0; col < inputMat.cols(); col++) {
-                    int val = intValues[pixel++]; // Will be in BGRA. They need to be separated.
+                    int val = intValues[pixel++]; // Will be in ARGB. They need to be separated.
 
                     /*
                     Some bit-manipulation to get the RGB values separated in order into the byteBuffer.
 
-                    u_int32 BGRA format (read backwards)
+                    u_int32 ARGB layout
                     00000000 10000000 20000000 30000000
                     Alpha    Red      Green    Blue
 

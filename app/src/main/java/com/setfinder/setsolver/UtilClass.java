@@ -86,7 +86,7 @@ public class UtilClass {
                 text,
                 location,
                 2,
-                0.5,
+                0.35,
                 new Scalar(0, 0, 0),
                 5
         );
@@ -95,7 +95,7 @@ public class UtilClass {
                 text,
                 location,
                 2,
-                0.5,
+                0.35,
                 new Scalar(255, 255, 255),
                 1
         );

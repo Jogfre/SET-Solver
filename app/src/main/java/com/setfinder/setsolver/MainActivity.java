@@ -9,6 +9,7 @@ import android.util.Log;
 import android.Manifest;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 
 import org.opencv.android.CameraActivity;
@@ -29,6 +30,7 @@ public class MainActivity extends CameraActivity {
     private ImageView staticCameraView;
     private ImageView forwardButton;
     private ImageView backButton;
+    private TextView infoField;
     private Mat lastFrame;
     private Mat frameClone;
     private ArrayList<Mat> frames;
@@ -57,6 +59,9 @@ public class MainActivity extends CameraActivity {
 
         backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> cycleBack());
+
+        infoField = findViewById(R.id.InfoField);
+
 
         // Initialize ArrayLists
         frames = new ArrayList<>();
@@ -130,12 +135,23 @@ public class MainActivity extends CameraActivity {
         if (frameIdx + 1 < frames.size()) {
             frameIdx++;
             UtilClass.matToImage(frames.get(frameIdx), staticCameraView);
+            String text = "Showing SET:\n" + frameIdx + "/" + setFrames.size();
+            infoField.setText(text);
         }
+
+
     }
     private void cycleBack() {
         if (frameIdx - 1 >= 0) {
             frameIdx--;
             UtilClass.matToImage(frames.get(frameIdx), staticCameraView);
+
+            String text;
+            if (frameIdx == 0)
+                 text = "SETs found:\n" + setFrames.size();
+            else
+                 text = "Showing SET:\n" + frameIdx + "/" + setFrames.size();
+            infoField.setText(text);
         }
     }
     /*
@@ -146,7 +162,7 @@ public class MainActivity extends CameraActivity {
         if (cards.size() > 0) {
             for (Card card : cards) {
                 Point center = card.getCenter();
-                center.x = center.x - 100;
+                center.x = center.x - 75;
                 UtilClass.putText(card.generateString(), frame, center);
             }
         }
@@ -234,16 +250,24 @@ public class MainActivity extends CameraActivity {
      */
     private void drawFrames() {
         frames.clear();
-        frames.add(lastFrame);
+        int setCount = 0;
+
         if (frameClone != null) {
             Mat tmp = frameClone.clone();
             drawCardCodes(tmp);
             frames.add(tmp);
         }
+        else {
+            frames.add(lastFrame);
+        }
 
         if (setFrames.size() > 0) {
             frames.addAll(setFrames);
+            setCount += setFrames.size();
         }
+
+        String text = "SETs found:\n" + setCount;
+        infoField.setText(text);
     }
 
     /**
@@ -258,6 +282,7 @@ public class MainActivity extends CameraActivity {
 
         mOpenCvCameraView.setVisibility(View.GONE);
         staticCameraView.setVisibility(View.VISIBLE);
+        infoField.setVisibility(View.VISIBLE);
 
         frameIdx = 0;
         forwardButton.setEnabled(true);
@@ -280,9 +305,11 @@ public class MainActivity extends CameraActivity {
 
         mOpenCvCameraView.setVisibility(View.VISIBLE);
         staticCameraView.setVisibility(View.GONE);
+        infoField.setVisibility(View.INVISIBLE);
 
         forwardButton.setEnabled(false);
         backButton.setEnabled(false);
+
 
         mOpenCvCameraView.enableView();
 

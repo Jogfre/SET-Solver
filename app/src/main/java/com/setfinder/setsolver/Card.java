@@ -54,7 +54,7 @@ public class Card {
 
         switch (chars[1]) {
             case 'B':
-                setColor("Blue");
+                setColor("Purple");
                 tmp = "1";
                 break;
             case 'G':
